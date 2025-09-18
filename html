@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Loja Online — Modelo</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#06b6d4;--muted:#94a3b8;--glass: rgba(255,255,255,0.03)}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(180deg,#071023 0%, #071727 100%);color:#e6eef6;-webkit-font-smoothing:antialiased}
+    header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;background:transparent}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7c3aed);display:flex;align-items:center;justify-content:center;font-weight:700;color:#062024}
+    h1{font-size:18px;margin:0}
+    .search{max-width:420px;flex:1;margin:0 20px}
+    .search input{width:100%;padding:10px 12px;border-radius:10px;border:0;background:var(--glass);color:inherit}
+    .actions{display:flex;gap:12px;align-items:center}
+    .btn{background:var(--accent);border:0;padding:10px 12px;border-radius:10px;color:#012;cursor:pointer}
+    .cart-btn{position:relative}
+    .badge{position:absolute;top:-6px;right:-6px;background:#ef4444;color:white;border-radius:999px;padding:2px 6px;font-size:12px}
+
+    main{padding:24px;display:grid;grid-template-columns:280px 1fr;gap:24px}
+    .sidebar{background:var(--card);padding:16px;border-radius:12px}
+    .product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:14px;border-radius:12px}
+    .thumb{height:140px;border-radius:10px;background:#082631;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+    .price{font-weight:700}
+    .meta{color:var(--muted);font-size:13px}
+
+    footer{padding:24px;text-align:center;color:var(--muted)}
+
+    /* cart drawer */
+    .drawer{position:fixed;right:20px;top:80px;width:360px;max-height:70vh;background:var(--card);border-radius:12px;padding:12px;box-shadow:0 10px 30px rgba(2,6,23,0.6);transform:translateX(110%);transition:transform .28s ease;overflow:auto}
+    .drawer.open{transform:translateX(0)}
+    .cart-item{display:flex;gap:10px;align-items:center;padding:8px;border-bottom:1px dashed rgba(255,255,255,0.03)}
+    .qty{display:flex;gap:6px;align-items:center}
+    .qty button{padding:6px;border-radius:6px;border:0;background:var(--glass);cursor:pointer}
+
+    /* responsive */
+    @media(max-width:900px){main{grid-template-columns:1fr} .search{order:3;margin-top:12px} .sidebar{order:2}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">LO</div>
+      <div>
+        <h1>Loja Modelo</h1>
+        <div class="meta">Loja demo — personalize produtos e preços</div>
+      </div>
+    </div>
+
+    <div class="search">
+      <input id="q" placeholder="Buscar produtos (ex: camiseta, boné)" />
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="clearLocal">Limpar dados</button>
+      <div class="cart-btn">
+        <button class="btn" id="openCart">Carrinho</button>
+        <div class="badge" id="cartCount" style="display:none">0</div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <aside class="sidebar">
+      <h3>Filtros rápidos</h3>
+      <div style="margin-top:12px">
+        <label>Faixa de preço</label>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <input placeholder="Mín" id="minPrice" />
+          <input placeholder="Máx" id="maxPrice" />
+        </div>
+        <button class="btn" id="applyFilter" style="margin-top:10px">Aplicar</button>
+      </div>
+
+      <hr style="margin:14px 0;border-color:rgba(255,255,255,0.03)" />
+      <h4>Como usar</h4>
+      <p class="meta">Clique em "Adicionar" para colocar itens no carrinho. O carrinho salva localmente. Isso é apenas um modelo — integração com pagamentos pode ser adicionada.</p>
+    </aside>
+
+    <section>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <h2>Produtos</h2>
+        <div class="meta">Exemplo de loja simples (HTML/CSS/JS)</div>
+      </div>
+
+      <div class="product-grid" id="grid"></div>
+    </section>
+  </main>
+
+  <div class="drawer" id="drawer" aria-hidden="true">
+    <h3>Seu carrinho</h3>
+    <div id="cartList"></div>
+    <div style="padding:10px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div class="meta">Total</div>
+        <div id="total" style="font-weight:800;font-size:18px">R$ 0,00</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn" id="checkoutBtn">Finalizar (simulação)</button>
+        <button id="closeDrawer" style="background:transparent;border:0;color:var(--muted);cursor:pointer">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Desenvolvido com ♥ — personalize e peça integração com meios de pagamento quando estiver pronto.
+  </footer>
+
+<script>
+// ====== Dados de exemplo - personalize aqui ======
+const products = [
+  {id:1,title:'Camiseta Básica',price:59.90,desc:'Algodão macio, várias cores',tag:'roupa'},
+  {id:2,title:'Boné Snapback',price:79.00,desc:'Ajuste traseiro, logo bordado',tag:'acessório'},
+  {id:3,title:'Mochila Compacta',price:149.90,desc:'Ideal para dia a dia',tag:'acessório'},
+  {id:4,title:'Caneca de Cerâmica',price:39.90,desc:'325ml, resistente',tag:'brinde'},
+  {id:5,title:'Adesivo Premium',price:9.90,desc:'Corte em alta precisão',tag:'brinde'}
+];
+
+// ====== Utilitários ======
+const formatBRL = v => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+
+// ====== Renderização ======
+const grid = document.getElementById('grid');
+function renderProducts(list){
+  grid.innerHTML='';
+  list.forEach(p=>{
+    const el = document.createElement('div'); el.className='card';
+    el.innerHTML = `
+      <div class="thumb"> <svg width="80" height="60" viewBox="0 0 80 60" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="60" rx="8" fill="rgba(255,255,255,0.02)"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.35)">${p.title}</text></svg></div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-weight:700">${p.title}</div>
+          <div class="meta">${p.desc}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="price">${formatBRL(p.price)}</div>
+          <button class="btn" data-id="${p.id}" style="margin-top:8px">Adicionar</button>
+        </div>
+      </div>
+    `;
+    grid.appendChild(el);
+  });
+}
+renderProducts(products);
+
+// ====== Busca e filtros ======
+document.getElementById('q').addEventListener('input', e=>{
+  const q = e.target.value.toLowerCase().trim();
+  const filtered = products.filter(p=> p.title.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q) || p.tag.toLowerCase().includes(q));
+  renderProducts(filtered);
+});
+
+document.getElementById('applyFilter').addEventListener('click', ()=>{
+  const min = parseFloat(document.getElementById('minPrice').value) || 0;
+  const max = parseFloat(document.getElementById('maxPrice').value) || Infinity;
+  const filtered = products.filter(p=> p.price >= min && p.price <= max);
+  renderProducts(filtered);
+});
+
+// ====== Carrinho (localStorage) ======
+let cart = JSON.parse(localStorage.getItem('cart_v1') || '[]');
+function saveCart(){ localStorage.setItem('cart_v1', JSON.stringify(cart)); updateCartUI(); }
+
+function addToCart(id){
+  const prod = products.find(p=>p.id==id); if(!prod) return;
+  const item = cart.find(i=>i.id==id);
+  if(item) item.q += 1; else cart.push({id:prod.id,title:prod.title,price:prod.price,q:1});
+  saveCart();
+}
+
+// event delegation for add buttons
+grid.addEventListener('click', e=>{
+  const btn = e.target.closest('button[data-id]');
+  if(!btn) return;
+  const id = Number(btn.dataset.id);
+  addToCart(id);
+});
+
+// cart drawer
+const drawer = document.getElementById('drawer');
+const cartList = document.getElementById('cartList');
+const cartCount = document.getElementById('cartCount');
+function updateCartUI(){
+  // render list
+  cartList.innerHTML='';
+  if(cart.length===0){ cartList.innerHTML='<p class="meta">Carrinho vazio</p>'; cartCount.style.display='none'; document.getElementById('total').textContent = formatBRL(0); return; }
+  cart.forEach(item=>{
+    const node = document.createElement('div'); node.className='cart-item';
+    node.innerHTML = `
+      <div style="flex:1">
+        <div style="font-weight:700">${item.title}</div>
+        <div class="meta">${formatBRL(item.price)} x ${item.q} = ${formatBRL(item.price * item.q)}</div>
+      </div>
+      <div class="qty">
+        <button data-op="dec" data-id="${item.id}">-</button>
+        <div>${item.q}</div>
+        <button data-op="inc" data-id="${item.id}">+</button>
+      </div>
+    `;
+    cartList.appendChild(node);
+  });
+  const total = cart.reduce((acc,i)=> acc + (i.price * i.q), 0);
+  document.getElementById('total').textContent = formatBRL(total);
+  const count = cart.reduce((acc,i)=> acc + i.q, 0);
+  cartCount.textContent = count; cartCount.style.display='inline-block';
+}
+updateCartUI();
+
+// open/close
+document.getElementById('openCart').addEventListener('click', ()=>{ drawer.classList.add('open'); drawer.setAttribute('aria-hidden','false'); });
+document.getElementById('closeDrawer').addEventListener('click', ()=>{ drawer.classList.remove('open'); drawer.setAttribute('aria-hidden','true'); });
+
+// qty buttons
+cartList.addEventListener('click', e=>{
+  const b = e.target.closest('button[data-op]'); if(!b) return;
+  const id = Number(b.dataset.id); const op = b.dataset.op;
+  const it = cart.find(x=>x.id===id); if(!it) return;
+  if(op==='inc'){ it.q += 1; } else { it.q = Math.max(0, it.q - 1); }
+  cart = cart.filter(x=> x.q>0);
+  saveCart();
+});
+
+// checkout simulation
+document.getElementById('checkoutBtn').addEventListener('click', ()=>{
+  if(cart.length===0){ alert('Carrinho vazio'); return; }
+  // aqui você pode integrar com API de pagamento (Mercado Pago, Pagar.me, Pix etc.)
+  alert('Simulação: pedido registrado. Você pode integrar pagamentos com Mercado Pago/Pix quando estiver pronto.');
+  cart = []; saveCart(); drawer.classList.remove('open');
+});
+
+// clear local
+document.getElementById('clearLocal').addEventListener('click', ()=>{ if(confirm('Limpar carrinho e configurações locais?')){ cart = []; localStorage.removeItem('cart_v1'); updateCartUI(); } });
+
+// expose for dev console
+window.__LOJA = {products, cart, addToCart, saveCart};
+</script>
+</body>
+</html>
